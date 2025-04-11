@@ -3,6 +3,7 @@
 const { execSync } = require('child_process');
 const core = require('@actions/core');
 const { getLastLottoRound, LogLevel, LottoService } = require('@rich-automation/lotto');
+const { chromium } = require('playwright');
 
 (async () => {
   let lottoService = null;
@@ -24,7 +25,7 @@ const { getLastLottoRound, LogLevel, LottoService } = require('@rich-automation/
 
     lottoService = new LottoService({
       headless: true,
-      controller: 'playwright',
+      controller: chromium,
       logLevel: LogLevel.DEBUG,
     });
     core.info('Signing in to the lotto service...');
