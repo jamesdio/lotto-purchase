@@ -1,5 +1,6 @@
 'use strict';
 
+const { execSync } = require('child_process');
 const core = require('@actions/core');
 const { getLastLottoRound, LogLevel, LottoService } = require('@rich-automation/lotto');
 
@@ -7,6 +8,9 @@ const { getLastLottoRound, LogLevel, LottoService } = require('@rich-automation/
   let lottoService = null;
 
   try {
+    core.info('Installing Playwright dependencies...');
+    execSync('pnpm dlx playwright install chromium --with-deps');
+
     const count = parseInt(core.getInput('count', { required: false })) || 5;
     const id = core.getInput('id', { required: true });
     const pwd = core.getInput('pwd', { required: true });
