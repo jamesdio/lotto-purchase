@@ -2,7 +2,7 @@
 
 const { execSync } = require('child_process');
 const core = require('@actions/core');
-const { getLastLottoRound, LogLevel, LottoService } = require('@rich-automation/lotto');
+const { getNextLottoRound, LogLevel, LottoService } = require('@rich-automation/lotto');
 const { chromium } = require('playwright');
 
 (async () => {
@@ -20,7 +20,7 @@ const { chromium } = require('playwright');
       throw new Error("The 'count' input must be a number between 1 and 5.");
     }
 
-    const round = getLastLottoRound();
+    const round = getNextLottoRound();
     core.info(`Current lotto round: ${round}`);
 
     lottoService = new LottoService({
