@@ -10,7 +10,7 @@ const { chromium } = require('playwright');
 
   try {
     core.info('Installing Playwright dependencies...');
-    execSync('pnpm dlx playwright install chromium --with-deps');
+    execSync('pnpm exec playwright install chromium --with-deps');
 
     const count = parseInt(core.getInput('count', { required: false })) || 5;
     const id = core.getInput('id', { required: true });
