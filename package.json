@@ -3,9 +3,6 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {
-    "build": "tsc"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -13,7 +10,7 @@
   "dependencies": {
     "@actions/core": "^1.11.1",
     "@actions/github": "^6.0.0",
-    "@rich-automation/lotto": "^2.0.0",
+    "@rich-automation/lotto": "^2.0.1",
     "playwright": "^1.51.1"
   },
   "devDependencies": {
