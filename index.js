@@ -35,6 +35,7 @@ const { chromium } = require('playwright');
     const numbersArray = await lottoService.purchase(count);
 
     core.info('Lotto tickets purchased successfully.');
+    core.info(`Purchased numbers: ${JSON.stringify(numbersArray)}`);
     core.setOutput('numbersArray', JSON.stringify(numbersArray));
     core.setOutput('round', round);
   } catch (error) {
