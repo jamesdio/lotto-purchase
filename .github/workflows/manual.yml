@@ -1,6 +1,18 @@
 name: Lotto purchase (manual)
 on:
   workflow_dispatch:
+    inputs:
+      count:
+        description: '구매 장수 (1-5)'
+        required: false
+        default: '5'
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
 jobs:
   run-purchase:
     runs-on: ubuntu-latest
@@ -19,6 +31,7 @@ jobs:
         with:
           id: ${{ secrets.ID }}
           pwd: ${{ secrets.PASSWORD }}
+          count: ${{ inputs.count }}
       - uses: rich-automation/lotto-archive-action@latest
         with:
           numbersArray: ${{ steps.purchase.outputs.numbersArray }}
