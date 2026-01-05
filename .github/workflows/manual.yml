@@ -18,6 +18,10 @@ on:
         description: '회차 (archive only 시 필수)'
         required: false
         type: string
+      numbersArray:
+        description: '번호 배열 (archive only 시 필수)'
+        required: false
+        type: string
 jobs:
   run-purchase:
     runs-on: ubuntu-latest
@@ -40,7 +44,7 @@ jobs:
           count: ${{ inputs.count }}
       - uses: rich-automation/lotto-archive-action@latest
         with:
-          numbersArray: ${{ inputs.count == '0' && '[]' || steps.purchase.outputs.numbersArray }}
+          numbersArray: ${{ inputs.count == '0' && inputs.numbersArray || steps.purchase.outputs.numbersArray }}
           round: ${{ inputs.count == '0' && inputs.round || steps.purchase.outputs.round }}
           token: ${{ secrets.GITHUB_TOKEN }}
           debug: true
