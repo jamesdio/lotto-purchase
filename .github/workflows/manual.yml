@@ -3,16 +3,21 @@ on:
   workflow_dispatch:
     inputs:
       count:
-        description: '구매 장수 (1-5)'
+        description: '구매 장수 (0=archive only)'
         required: false
         default: '5'
         type: choice
         options:
+          - '0'
           - '1'
           - '2'
           - '3'
           - '4'
           - '5'
+      round:
+        description: '회차 (archive only 시 필수)'
+        required: false
+        type: string
 jobs:
   run-purchase:
     runs-on: ubuntu-latest
@@ -27,6 +32,7 @@ jobs:
           pnpm install
       - name: Purchase Lotto
         id: purchase
+        if: inputs.count != '0'
         uses: ./
         with:
           id: ${{ secrets.ID }}
@@ -34,7 +40,7 @@ jobs:
           count: ${{ inputs.count }}
       - uses: rich-automation/lotto-archive-action@latest
         with:
-          numbersArray: ${{ steps.purchase.outputs.numbersArray }}
-          round: ${{ steps.purchase.outputs.round }}
+          numbersArray: ${{ inputs.count == '0' && '[]' || steps.purchase.outputs.numbersArray }}
+          round: ${{ inputs.count == '0' && inputs.round || steps.purchase.outputs.round }}
           token: ${{ secrets.GITHUB_TOKEN }}
           debug: true
