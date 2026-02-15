@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       count:
-        description: '구매 장수 (0=archive only)'
+        description: '구매 장수 (0=당첨 조회만)'
         required: false
         default: '5'
         type: choice
@@ -15,11 +15,11 @@ on:
           - '4'
           - '5'
       round:
-        description: '회차 (archive only 시 필수)'
+        description: '회차 (수동 기록 시 입력)'
         required: false
         type: string
       numbersArray:
-        description: '번호 배열 (archive only 시 필수)'
+        description: '번호 배열 (수동 기록 시 입력)'
         required: false
         type: string
 jobs:
@@ -34,6 +34,8 @@ jobs:
       - run: |
           corepack enable
           pnpm install
+
+      # count > 0: 로또 구매 실행
       - name: Purchase Lotto
         id: purchase
         if: inputs.count != '0'
@@ -42,9 +44,14 @@ jobs:
           id: ${{ secrets.ID }}
           pwd: ${{ secrets.PASSWORD }}
           count: ${{ inputs.count }}
+
+      # 항상 실행: 기존 이슈 당첨 조회 (preRun) + 새 구매 기록 (run)
+      # count=0 이면서 round/numbersArray 입력 없음 → 당첨 조회만 (numbersArray=[], round=0)
+      # count=0 이면서 round/numbersArray 입력 있음 → 수동 구매 기록 + 당첨 조회
+      # count>0 → 구매 결과로 이슈 생성 + 당첨 조회
       - uses: rich-automation/lotto-archive-action@latest
         with:
-          numbersArray: ${{ inputs.count == '0' && inputs.numbersArray || steps.purchase.outputs.numbersArray }}
-          round: ${{ inputs.count == '0' && inputs.round || steps.purchase.outputs.round }}
+          numbersArray: ${{ inputs.count == '0' && (inputs.numbersArray || '[]') || steps.purchase.outputs.numbersArray }}
+          round: ${{ inputs.count == '0' && (inputs.round || '0') || steps.purchase.outputs.round }}
           token: ${{ secrets.GITHUB_TOKEN }}
           debug: true
