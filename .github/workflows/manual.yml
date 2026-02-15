@@ -35,7 +35,32 @@ jobs:
           corepack enable
           pnpm install
 
-      # count > 0: 로또 구매 실행
+      # ── input 검증 및 모드 로깅 ──
+      # count=0: 당첨 조회만 or 수동 기록 (수동 기록 시 round/numbersArray 둘 다 필수)
+      # count>0: 로또 구매 + 당첨 조회
+      - name: Validate inputs
+        if: inputs.count == '0'
+        env:
+          INPUT_ROUND: ${{ inputs.round }}
+          INPUT_NUMBERS: ${{ inputs.numbersArray }}
+        run: |
+          HAS_ROUND=$([[ -n "$INPUT_ROUND" ]] && echo true || echo false)
+          HAS_NUMBERS=$([[ -n "$INPUT_NUMBERS" ]] && echo true || echo false)
+          if [[ "$HAS_ROUND" != "$HAS_NUMBERS" ]]; then
+            echo "::error::수동 기록 시 round와 numbersArray를 둘 다 입력해야 합니다."
+            exit 1
+          elif [[ "$HAS_ROUND" == "true" ]]; then
+            echo "📝 모드: 수동 기록 + 당첨 조회 (round=$INPUT_ROUND)"
+          else
+            echo "🔍 모드: 당첨 조회만"
+          fi
+
+      - name: Log purchase mode
+        if: inputs.count != '0'
+        run: |
+          echo "🎰 모드: 구매 (${{ inputs.count }}장) + 당첨 조회"
+
+      # ── 구매 ──
       - name: Purchase Lotto
         id: purchase
         if: inputs.count != '0'
@@ -45,10 +70,9 @@ jobs:
           pwd: ${{ secrets.PASSWORD }}
           count: ${{ inputs.count }}
 
-      # 항상 실행: 기존 이슈 당첨 조회 (preRun) + 새 구매 기록 (run)
-      # count=0 이면서 round/numbersArray 입력 없음 → 당첨 조회만 (numbersArray=[], round=0)
-      # count=0 이면서 round/numbersArray 입력 있음 → 수동 구매 기록 + 당첨 조회
-      # count>0 → 구매 결과로 이슈 생성 + 당첨 조회
+      # ── 아카이브 (항상 실행) ──
+      # 구매 결과 or 수동 입력으로 이슈 생성 + 기존 이슈 당첨 조회
+      # 입력 없으면 numbersArray=[], round=0 → 이슈 생성 스킵, 당첨 조회만 실행
       - uses: rich-automation/lotto-archive-action@latest
         with:
           numbersArray: ${{ inputs.count == '0' && (inputs.numbersArray || '[]') || steps.purchase.outputs.numbersArray }}
