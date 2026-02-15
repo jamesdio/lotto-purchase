@@ -1,9 +1,10 @@
 name: Lotto purchase (cron)
 on:
   schedule:
-    # 매 주 일요일 오전 7시, Github Actions 에서는 UTC 기준으로 실행됨
+    # KST 기준 매주 일요일, 월요일 오전 7시 (UTC 전날 22시)
+    # 일요일 구매 실패 시 월요일에 재시도
     # https://elmah.io/tools/cron-parser/
-    - cron: '0 22 * * 6'
+    - cron: '0 22 * * 6,0'
 jobs:
   run-purchase:
     runs-on: ubuntu-latest
@@ -15,15 +16,39 @@ jobs:
       - run: |
           corepack enable
           pnpm install
+
+      # ── 중복 구매 체크 ──
+      - name: Check if already purchased
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ROUND=$(node -e "console.log(require('@rich-automation/lotto').getNextLottoRound())")
+          echo "round=$ROUND" >> $GITHUB_OUTPUT
+          EXISTING=$(gh issue list --search "round: $ROUND in:body" --state all --json number --jq 'length')
+          if [ "$EXISTING" -gt "0" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "⏭️ Round $ROUND 이미 구매됨, 스킵합니다."
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "🎰 Round $ROUND 구매를 진행합니다."
+          fi
+
+      # ── 구매 ──
       - name: Purchase Lotto
         id: purchase
+        if: steps.check.outputs.skip != 'true'
         uses: ./
         with:
           id: ${{ secrets.ID }}
           pwd: ${{ secrets.PASSWORD }}
+
+      # ── 아카이브 (항상 실행) ──
+      # 구매 시 → 이슈 생성 + 당첨 조회
+      # 스킵 시 → 당첨 조회만
       - uses: rich-automation/lotto-archive-action@latest
         with:
-          numbersArray: ${{ steps.purchase.outputs.numbersArray }}
-          round: ${{ steps.purchase.outputs.round }}
+          numbersArray: ${{ steps.purchase.outputs.numbersArray || '[]' }}
+          round: ${{ steps.purchase.outputs.round || steps.check.outputs.round }}
           token: ${{ secrets.GITHUB_TOKEN }}
           debug: true
